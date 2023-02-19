@@ -1,15 +1,19 @@
 local bump = require 'lib/bump/bump'
-
 local world = nil
 
 function drawBox(box, fill)
     love.graphics.rectangle(fill or "line", box.x, box.y, box.w, box.h)
 end
 
+function landBox(x, y)
+    love.graphics.rectangle("fill", x, y, 32, 32)
+end
+
+
 function initPlayer()
     p = {}
-    p.x = 400
-    p.y = 200
+    p.x = 100
+    p.y = 50
     p.w = 16
     p.h = 16
     p.dx = 0
@@ -52,7 +56,7 @@ function movePlayer(dt)
     	p.dy = -300 * dt
     	p.grounded = false
 	end
-	p.x, p.y, collisions, len = world:move(p, goalX, goalY, collisionFilter)
+	p.x, p.y, collisions, len = world:move(p, goalX, goalY)
 
 	for i, coll in ipairs(collisions) do
     	if coll.touch.y > goalY then
@@ -66,12 +70,29 @@ end
 function love.load()
     initPlayer()
 
-    b = {x = 100, y = 300, w = 100, h = 40}
-	g = {x = 0, y = love.graphics.getHeight() - 10, w = love.graphics.getWidth(), h = 10}
-	world = bump.newWorld(16)
+	world = bump.newWorld(32)
 	world:add(p, p.x, p.y, p.w, p.h)
-	world:add(b, b.x, b.y, b.w, b.h)
-	world:add(g, g.x, g.y, g.w, g.h)
+
+    land = {}
+
+    map ={{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+    	  {1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1},
+    	  {1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1},
+    	  {1,1,1,1,0,0,0,0,0,1,0,0,0,0,1,1},
+    	  {1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1},
+    	  {1,1,1,1,0,0,0,0,0,1,0,0,0,0,1,1},
+    	  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}}
+	for i,v in ipairs(map) do
+    	for j,w in ipairs(v) do
+        	if w == 1 then
+            	table.insert(land, {x = (j-1)*32, y = (i-1)*32, w = 32, h = 32})
+        	end
+    	end
+	end
+
+	for i,v in ipairs(land) do
+    	world:add(land[i], v.x, v.y, v.w, v.h)
+	end
 end
 
 
@@ -82,11 +103,13 @@ function love.keypressed(key)
 end
 
 function love.update(dt)
-    movePlayer(dt)
+	movePlayer(dt)
 end
 
 function love.draw()
     drawBox(p)
-    drawBox(b, "fill")
-    drawBox(g, "fill")
+    for i,v in ipairs(land) do
+        landBox(v.x, v.y)
+    end
+    
 end
